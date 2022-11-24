@@ -8,18 +8,10 @@
 /* Alterar aqui, caso seja necessario */
 
 // ENZO
-// #define ARQ_INSERE "C:\\Users\\steam\\Desktop\\Listas_e_Atividades\\4a_Semestre\\ED2\\Sistema-Biblioteca-V3\\arquivos\\insere.bin"
-// #define ARQ_AB "C:\\Users\\steam\\Desktop\\Listas_e_Atividades\\4a_Semestre\\ED2\\Sistema-Biblioteca-V3\\arquivos\\ab.bin"
-// #define ARQ_BUSCA "C:\\Users\\steam\\Desktop\\Listas_e_Atividades\\4a_Semestre\\ED2\\Sistema-Biblioteca-V3\\arquivos\\busca.bin"
-// #define ARQ_DADOS "C:\\Users\\steam\\Desktop\\Listas_e_Atividades\\4a_Semestre\\ED2\\Sistema-Biblioteca-V3\\arquivos\\dados.bin"
-
-
-// DOUGRINHAS GAMEPLAYS
-#define ARQ_INSERE "C:\\Users\\Douglas Nicida\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\arquivos\\insere.bin"
-#define ARQ_AB "C:\\Users\\Douglas Nicida\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\arquivos\\ab.bin"
-#define ARQ_BUSCA "C:\\Users\\Douglas Nicida\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\arquivos\\busca.bin"
-#define ARQ_DADOS "C:\\Users\\Douglas Nicida\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\arquivos\\dados.bin"
-
+#define ARQ_INSERE "C:\\Users\\aluno\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\insere.bin"
+#define ARQ_AB "C:\\Users\\aluno\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\ab.bin"
+#define ARQ_BUSCA "C:\\Users\\aluno\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\busca.bin"
+#define ARQ_DADOS "C:\\Users\\aluno\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\dados.bin"
 
 #define KEY_SIZE 14
 #define MAX_KEYS 3
@@ -41,6 +33,7 @@ typedef struct SABPagina
 {
     int ctChaves; // conta a qtd de chaves q tem na pagina no momento
     char chave[MAX_KEYS][KEY_SIZE];
+    int posChave[MAX_KEYS];
     int filho[MAX_KEYS + 1]; // salva a páginas do filhos, onde cada página pode possuir no máximo 4 filhos
 } ABPagina;
 
@@ -51,32 +44,29 @@ typedef struct SABPagina
 
 /* Sub-rotinas para manipular arvore B*/
 int obterRaiz(FILE *arqAB);
-int criarArvoreB(FILE *arqAB, char isbn[KEY_SIZE]);
-int criarRaiz(FILE *arqAB, char isbn[KEY_SIZE], int esq, int dir);
+int criarArvoreB(FILE *arqAB, char isbn[KEY_SIZE], int ct);
 int obterPagina(FILE *arqAB);
 int criarPagina(ABPagina *novaPag);
 void abEscrever(FILE *arqAB, int rrn, ABPagina *abPagina); // VER SE ISSO FUNCIONA
 int inserirRaiz(FILE *arqAB, int raiz);
 void lerArvoreAB(FILE *arqAB, int rrn, ABPagina *abPagina);
-int inserirAB(FILE *arqAB, int rrn, char chave[KEY_SIZE], int *paginaFilhoPromovido, char *chavePromovida);
+int inserirAB(FILE *arqAB, int rrn, char chave[KEY_SIZE], int *paginaFilhoPromovido, char *chavePromovida, int ct, int *posChavePromovida);
 int procurarNo(char chave[KEY_SIZE], ABPagina *abPagina, int *pos);
-int insereNaPagina(char chave[KEY_SIZE], int rrnPromovidaBaixo, ABPagina *abPagina);
-void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDeBaixo, ABPagina *paginaAntiga, char *chavePromovida, int *paginaFilhoPromovido, ABPagina *paginaNova);
-void percorrerInOrdemAB(FILE *arqInserir, FILE *arqAB, FILE *arqDados, char key[KEY_SIZE]);
-void buscaDados(FILE *arqInserir, FILE *arqDados, char key[KEY_SIZE]);
-void percorrerInOrdemABTodos(FILE *arqInserir, FILE *arqAB, FILE *arqDados);
+int criarRaiz(FILE *arqAB, int ct, char isbn[KEY_SIZE], int esq, int dir);
+int insereNaPagina(FILE *arqAB, char chave[KEY_SIZE], int rrnPromovidaBaixo, int posChavePosPromovidoBaixo, ABPagina *abPagina);
+void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDeBaixo, int posPromovidaDeBaixo, ABPagina *paginaAntiga, char *chavePromovida, int *paginaFilhoPromovido, int *posChavePromovida, ABPagina *paginaNova);
+void percorrerInOrdemAB(FILE *arqAB, FILE *arqDados, char key[KEY_SIZE]);
 
 /* Sub-rotinas doo exercicio */
 FILE *abrirArquivo(char *ch, char *tipoAbertura);
 void fecharArquivo(FILE *arq);
 void obterRegistro(FILE *arq, Livro *livro, char key[KEY_SIZE], char tipoArq);
 void inserir(FILE *arqInserir, FILE *arqDados, FILE *arqAB);
+void buscaDados(FILE *arqDados, char key[KEY_SIZE], int rrn);
 
 /**********************************MAIN****************************************/
 int main()
 {
-    printf("TAMANHO PAGINA: %d\n", TAM_PAGINA);
-
     setlocale(LC_ALL, "");
 
     FILE *arqInserir, *arqDados, *arqAB, *arqBusca;
@@ -109,33 +99,20 @@ int main()
         }
         case 2:
         {
-            arqAB = abrirArquivo(ARQ_AB, "r+b");
-            arqInserir = abrirArquivo(ARQ_INSERE, "r+b");
-            arqDados = abrirArquivo(ARQ_DADOS, "r+b");
-
-            percorrerInOrdemABTodos(arqInserir, arqAB, arqDados);
-
-            fecharArquivo(arqAB);
-            fecharArquivo(arqInserir);
-            fecharArquivo(arqDados);
-
+            printf("Listar dados de todos os livros");
             break;
         }
         case 3:
         {
             char key[KEY_SIZE];
-
             arqAB = abrirArquivo(ARQ_AB, "r+b");
             arqBusca = abrirArquivo(ARQ_BUSCA, "r+b");
-            arqInserir = abrirArquivo(ARQ_INSERE, "r+b");
             arqDados = abrirArquivo(ARQ_DADOS, "r+b");
             obterRegistro(arqBusca, NULL, key, 'b');
 
-            percorrerInOrdemAB(arqInserir, arqAB, arqDados, key);
-
+            percorrerInOrdemAB(arqAB, arqDados, key);
             fecharArquivo(arqAB);
             fecharArquivo(arqBusca);
-            fecharArquivo(arqInserir);
             fecharArquivo(arqDados);
 
             break;
@@ -220,11 +197,16 @@ void inserir(FILE *arqInserir, FILE *arqDados, FILE *arqAB)
     int promovido; // indica se houve promocao para baixo
     int rrnPromovido;
     char chavePromovida[KEY_SIZE];
+    int posChavePromovida;
+    int ct;
 
     arqInserir = abrirArquivo(ARQ_INSERE, "r+b");
     arqDados = abrirArquivo(ARQ_DADOS, "r+b");
 
     obterRegistro(arqInserir, &livro, NULL, 'i');
+
+    fseek(arqInserir, 1, SEEK_SET);
+    fread(&ct, 1, sizeof(int), arqInserir);
 
     // Inserir sempre no final do arquivo de DADOS
     sprintf(buffer, "%s#%s#%s#%s#", livro.isbn, livro.titulo, livro.autor, livro.ano);
@@ -234,20 +216,19 @@ void inserir(FILE *arqInserir, FILE *arqDados, FILE *arqAB)
     // se o rrn for 0, quer dizer que deverá criar tudo do zero, se não, deve procurar um lugar para inserir
     if ((arqAB = abrirArquivo(ARQ_AB, "r+b")))
     {
-        printf("\nO arquivo ja existe\n");
         raiz = obterRaiz(arqAB);
 
         // verifica se houve promoção e onde será inserido
-        promovido = inserirAB(arqAB, raiz, livro.isbn, &rrnPromovido, chavePromovida);
+        promovido = inserirAB(arqAB, raiz, livro.isbn, &rrnPromovido, &chavePromovida, ct, &posChavePromovida);
 
         // se houver promoção, cria-se uma nova raíz
         if (promovido)
-            raiz = criarRaiz(arqAB, chavePromovida, raiz, rrnPromovido); // Cria a página promovida
+            raiz = criarRaiz(arqAB, ct, chavePromovida, raiz, rrnPromovido); // Cria a página promovida
     }
     else
     {
         arqAB = abrirArquivo(ARQ_AB, "w+b");
-        raiz = criarArvoreB(arqAB, livro.isbn);
+        raiz = criarArvoreB(arqAB, livro.isbn, ct);
     }
 
     fecharArquivo(arqAB);
@@ -318,46 +299,41 @@ int criarPagina(ABPagina *novaPag)
         {
             novaPag->chave[i][j] = NO_KEY;
         }
+
         novaPag->chave[i][KEY_SIZE - 1] = '\0';
 
+        novaPag->posChave[i] = NIL;
         novaPag->filho[i] = NIL;
     }
 
     novaPag->filho[MAX_KEYS] = NIL;
-
-    printf("Pagina criada com sucesso. \n");
 }
 
-int criarRaiz(FILE *arqAB, char isbn[KEY_SIZE], int esq, int dir)
+int criarRaiz(FILE *arqAB, int ct, char isbn[KEY_SIZE], int esq, int dir)
 {
     ABPagina abPagina;
     int rrn;
-
-    printf("esquerda: %d // direita: %d\n", esq, dir);
 
     rrn = obterPagina(arqAB);
     criarPagina(&abPagina);
 
     strcpy(abPagina.chave[0], isbn);
+    abPagina.posChave[0] = ct;
     abPagina.filho[0] = esq;
     abPagina.filho[1] = dir;
     abPagina.ctChaves = 1;
     abEscrever(arqAB, rrn, &abPagina);
     inserirRaiz(arqAB, rrn);
 
-    printf("Raiz criada com sucesso. \n");
-
     return rrn;
 }
 
-int criarArvoreB(FILE *arqAB, char isbn[KEY_SIZE])
+int criarArvoreB(FILE *arqAB, char isbn[KEY_SIZE], int ct)
 {
     int raiz = -1;
 
     fwrite(&raiz, 1, sizeof(int), arqAB);
-    raiz = criarRaiz(arqAB, isbn, NIL, NIL);
-
-    printf("Arvore criada com sucesso. \n");
+    raiz = criarRaiz(arqAB, ct, isbn, NIL, NIL);
 
     return raiz;
 }
@@ -371,20 +347,20 @@ int inserirRaiz(FILE *arqAB, int raiz)
     return raiz;
 }
 
-int inserirAB(FILE *arqAB, int rrn, char chave[KEY_SIZE], int *paginaFilhoPromovido, char *chavePromovida)
+int inserirAB(FILE *arqAB, int rrn, char chave[KEY_SIZE], int *paginaFilhoPromovido, char *chavePromovida, int ct, int *posChavePromovida)
 {
     // Função para inserir isbn dentro da árvore
-
     ABPagina pagina, novaPagina;
     int encontrado, promovido;
 
-    char chavePromovidaDeBaixo[KEY_SIZE]; // chave promovida de baixo
-    int pos, rrnPromovidoDeBaixo;         // rrn e pos promovidos de baixo
+    char chavePromovidaDeBaixo[KEY_SIZE];                      // chave promovida de baixo
+    int pos, rrnPromovidoDeBaixo, posChavePosPromovidoDeBaixo; // rrn e pos promovidos de baixo
 
     // se o rrn for igual a -1 (dizendo que ainda nao possui filhos)
     if (rrn == NIL)
     {
         strcpy(chavePromovida, chave);
+        *posChavePromovida = ct;
         *paginaFilhoPromovido = NIL;
         return YES;
     }
@@ -397,12 +373,11 @@ int inserirAB(FILE *arqAB, int rrn, char chave[KEY_SIZE], int *paginaFilhoPromov
     // se a chave já se encontra na árvore retorna um erro
     if (encontrado)
     {
-        printf("ERRO: Chave %s duplicada\n", chave);
+        printf("ERRO: Chave duplicada (%s)\n", chave);
         return 0;
     }
 
-    // chama a função recursivamente até chegar na última camada da árvore
-    promovido = inserirAB(arqAB, pagina.filho[pos], chave, &rrnPromovidoDeBaixo, chavePromovidaDeBaixo);
+    promovido = inserirAB(arqAB, pagina.filho[pos], chave, &rrnPromovidoDeBaixo, chavePromovidaDeBaixo, ct, &posChavePosPromovidoDeBaixo);
 
     if (!promovido) // não houve promoção
         return NO;
@@ -410,28 +385,29 @@ int inserirAB(FILE *arqAB, int rrn, char chave[KEY_SIZE], int *paginaFilhoPromov
     // Insere sem a necessidade de split se a quantidade de chaves for menor que 4 (ordem 4)
     if (pagina.ctChaves < MAX_KEYS)
     {
-        insereNaPagina(chavePromovidaDeBaixo, rrnPromovidoDeBaixo, &pagina);
+        insereNaPagina(arqAB, chavePromovidaDeBaixo, rrnPromovidoDeBaixo, posChavePosPromovidoDeBaixo, &pagina);
 
-        abEscrever(arqAB, rrn, &pagina); //
+        abEscrever(arqAB, rrn, &pagina);
 
-        printf("Chave %s inserida com sucesso\n", chavePromovidaDeBaixo);
+        printf("Chave %s inserida com sucesso \n", chavePromovidaDeBaixo);
 
         return NO;
     }
     else
     {
-        split(arqAB, chavePromovidaDeBaixo, rrnPromovidoDeBaixo, &pagina, chavePromovida, paginaFilhoPromovido, &novaPagina);
+        split(arqAB, chavePromovidaDeBaixo, rrnPromovidoDeBaixo, posChavePosPromovidoDeBaixo, &pagina, chavePromovida, paginaFilhoPromovido, posChavePromovida, &novaPagina);
 
         abEscrever(arqAB, rrn, &pagina);
         abEscrever(arqAB, *paginaFilhoPromovido, &novaPagina);
+        
         printf("Divisao de no\n");
-        printf("Chave %s promovida", chavePromovida);
+        printf("Chave %s promovida\n", chavePromovida);
 
         return YES;
     }
 }
 
-int insereNaPagina(char chave[KEY_SIZE], int rrnPromovidaBaixo, ABPagina *abPagina)
+int insereNaPagina(FILE *arqAB, char chave[KEY_SIZE], int rrnPromovidaBaixo, int posChavePosPromovidoBaixo, ABPagina *abPagina)
 {
     int i;
 
@@ -439,16 +415,18 @@ int insereNaPagina(char chave[KEY_SIZE], int rrnPromovidaBaixo, ABPagina *abPagi
     verificando se a chave é menor que a chave já existente na página e se a posição é diferente de 0
     até achar uma posição para escrever
     */
+
     for (i = abPagina->ctChaves; strcmp(chave, abPagina->chave[i - 1]) < 0 && i > 0; i--)
     {
         strcpy(abPagina->chave[i], abPagina->chave[i - 1]);
+        abPagina->posChave[i] = abPagina->posChave[i - 1];
         abPagina->filho[i + 1] = abPagina->filho[i];
     }
+
     abPagina->ctChaves++;
     strcpy(abPagina->chave[i], chave);
+    abPagina->posChave[i] = posChavePosPromovidoBaixo;
     abPagina->filho[i + 1] = rrnPromovidaBaixo;
-
-    // printf("Inserido na Pagina! \n");
 }
 
 int procurarNo(char chave[KEY_SIZE], ABPagina *abPagina, int *pos)
@@ -468,10 +446,11 @@ int procurarNo(char chave[KEY_SIZE], ABPagina *abPagina, int *pos)
 }
 
 // SPLIT
-void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDeBaixo, ABPagina *paginaAntiga, char *chavePromovida, int *paginaFilhoPromovido, ABPagina *paginaNova)
+void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDeBaixo, int posPromovidaDeBaixo, ABPagina *paginaAntiga, char *chavePromovida, int *paginaFilhoPromovido, int *posChavePromovida, ABPagina *paginaNova)
 {
-    int i, j;
+    int i, j, k;
     char splitChaveBuffer[MAX_KEYS + 1][KEY_SIZE]; // buffer de chave antes do split
+    int splitPosBuffer[MAX_KEYS + 1];              // buffer das pos antes do split
     int splitFilhoBuffer[MAX_KEYS + 2];            // buffer dos filhos antes do split
 
     double div = (double)MAX_KEYS / 2;
@@ -481,8 +460,10 @@ void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDe
     for (i = 0; i < MAX_KEYS; i++)
     {
         strcpy(splitChaveBuffer[i], paginaAntiga->chave[i]);
+        splitPosBuffer[i] = paginaAntiga->posChave[i];
         splitFilhoBuffer[i] = paginaAntiga->filho[i];
     }
+
     // pega o ultimo filho
     splitFilhoBuffer[i] = paginaAntiga->filho[i];
 
@@ -490,10 +471,12 @@ void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDe
     for (i = MAX_KEYS; (strcmp(chavePromovidaDeBaixo, splitChaveBuffer[i - 1])) < 0 && i > 0; i--)
     {
         strcpy(splitChaveBuffer[i], splitChaveBuffer[i - 1]);
+        splitPosBuffer[i] = splitPosBuffer[i - 1];
         splitFilhoBuffer[i + 1] = splitFilhoBuffer[i];
     }
 
     strcpy(splitChaveBuffer[i], chavePromovidaDeBaixo);
+    splitPosBuffer[i] = posPromovidaDeBaixo;
     splitFilhoBuffer[i + 1] = rrnPromovidoDeBaixo;
 
     // pegando o rrn da nova pagina
@@ -506,15 +489,20 @@ void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDe
     {
         // a pagina antiga recebe os valores a esquerda do meio selecionado (filho a esquerda)
         strcpy(paginaAntiga->chave[i], splitChaveBuffer[i]); // 4444444444444
+        paginaAntiga->posChave[i] = splitPosBuffer[i];
         paginaAntiga->filho[i] = splitFilhoBuffer[i];
 
         // pega os valores a direita da metade e joga para a nova pagina (filho a direita)
         strcpy(paginaNova->chave[i], splitChaveBuffer[i + 1 + mid]);
+        paginaNova->posChave[i] = splitPosBuffer[i + 1 + mid];
         paginaNova->filho[i] = splitFilhoBuffer[i + mid];
 
         // Remove os elementos promovidos e dividos da página antiga
         for (j = 0; j < KEY_SIZE - 1; j++)
             paginaAntiga->chave[i + mid - 1][j] = NO_KEY;
+
+        for (k = 0; k < MAX_KEYS; k++)
+            paginaAntiga->posChave[i + mid - 1] = NIL;
 
         paginaAntiga->chave[i + 1 + mid][KEY_SIZE - 1] = '\0';
     }
@@ -529,15 +517,15 @@ void split(FILE *arqAB, char chavePromovidaDeBaixo[KEY_SIZE], int rrnPromovidoDe
 
     // pegando o valor que vai subir e passando para chave promovida
     strcpy(chavePromovida, splitChaveBuffer[mid]);
-
-    printf("SPLITADO!\n");
+    *posChavePromovida = splitPosBuffer[mid];
 }
 
-void percorrerInOrdemAB(FILE *arqInserir, FILE *arqAB, FILE *arqDados, char key[KEY_SIZE])
+void percorrerInOrdemAB(FILE *arqAB, FILE *arqDados, char key[KEY_SIZE])
 {
     ABPagina pagina;
     int i = 0;
     int raiz, rrn;
+    Livro livro;
 
     raiz = obterRaiz(arqAB);
     lerArvoreAB(arqAB, raiz, &pagina);
@@ -561,18 +549,18 @@ void percorrerInOrdemAB(FILE *arqInserir, FILE *arqAB, FILE *arqDados, char key[
             }
             else
             {
-                printf("Chave nao encontrada! \n");
+                printf("Chave %s nao encontrada! \n", key);
                 return;
             }
         }
     }
 
-    printf("Chave %s encontrada, pagina %d, posicao %d\n", pagina.chave[i], raiz, i);
-
-    buscaDados(arqInserir, arqDados, pagina.chave[i]);
+    printf("Chave %s encontrada, posChave: %d, pagina: %d, posicao: %d\n", pagina.chave[i], pagina.posChave[i], raiz, i);
+    
+	buscaDados(arqDados, key, pagina.posChave[i] - 1);
 }
 
-void buscaDados(FILE *arqInserir, FILE *arqDados, char key[KEY_SIZE])
+void buscaDados(FILE *arqDados, char key[KEY_SIZE], int rrn)
 {
     int tam = 119;
     int ct, i, encontrou = 0;
@@ -582,70 +570,19 @@ void buscaDados(FILE *arqInserir, FILE *arqDados, char key[KEY_SIZE])
     buffer = (char *)malloc(119 * sizeof(char));
     token = (char *)malloc(50 * sizeof(char));
 
-    fseek(arqInserir, 1, SEEK_SET);
-    fread(&ct, sizeof(int), 1, arqInserir);
     rewind(arqDados);
+    fseek(arqDados, rrn * sizeof(Livro), SEEK_SET);
 
-    for (i = 0; i < ct; i++)
-    {
-        fread(buffer, sizeof(livro), 1, arqDados);
+    fread(buffer, sizeof(livro), 1, arqDados);
 
-        token = strtok(buffer, "#");
-        strcpy(livro.isbn, token);
-        token = strtok(NULL, "#");
-        strcpy(livro.titulo, token);
-        token = strtok(NULL, "#");
-        strcpy(livro.autor, token);
-        token = strtok(NULL, "#");
-        strcpy(livro.ano, token);
+    token = strtok(buffer, "#");
+    strcpy(livro.isbn, token);
+    token = strtok(NULL, "#");
+    strcpy(livro.titulo, token);
+    token = strtok(NULL, "#");
+    strcpy(livro.autor, token);
+    token = strtok(NULL, "#");
+    strcpy(livro.ano, token);
 
-        if (strcmp(key, livro.isbn) == 0)
-        {
-            encontrou = 1;
-            break;
-        }
-    }
-
-    if (encontrou == 1)
-    {
-        printf("ISBN: %s\nTITULO: %s\nAUTOR: %s\nANO: %s\n", livro.isbn, livro.titulo, livro.autor, livro.ano);
-    }
-    else
-    {
-        printf("Dados do livro nao encontrados!\n");
-    }
-
-    encontrou = 0;
-}
-
-void percorrerInOrdemABTodos(FILE *arqInserir, FILE *arqAB, FILE *arqDados)
-{
-    ABPagina pagina;
-    int i = 1;
-    int raiz, rrn;
-
-    raiz = obterRaiz(arqAB);
-    lerArvoreAB(arqAB, raiz, &pagina);
-
-    while ((strcmp(pagina.chave[i], pagina.chave[i + 1]) < 0) && (i < pagina.ctChaves))
-    {
-        i++;
-    }
-
-    printf("i: %d\n", i);
-
-    if (pagina.filho[i] != NIL)
-    {
-        buscaDados(arqInserir, arqDados, pagina.chave[i]);
-        raiz = pagina.filho[i];
-        i = 0;
-        lerArvoreAB(arqAB, raiz, &pagina);
-    }
-    else
-    {
-        printf("Chave nao encontrada! \n");
-        return;
-    }
-
-    printf("Chave %s encontrada, pagina %d, posicao %d\n", pagina.chave[i], raiz, i);
+    printf("ISBN: %s\nTITULO: %s\nAUTOR: %s\nANO: %s\n", livro.isbn, livro.titulo, livro.autor, livro.ano);
 }
