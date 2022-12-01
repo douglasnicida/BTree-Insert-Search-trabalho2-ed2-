@@ -7,7 +7,6 @@
 /*********************************CONSTANTES***********************************/
 /* Alterar aqui, caso seja necessario */
 
-// ENZO
 #define ARQ_INSERE "C:\\Users\\aluno\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\insere.bin"
 #define ARQ_AB "C:\\Users\\aluno\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\ab.bin"
 #define ARQ_BUSCA "C:\\Users\\aluno\\Desktop\\projeto-ed2-biblioteca-arquivos-v3-main\\busca.bin"
